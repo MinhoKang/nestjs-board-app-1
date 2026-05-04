@@ -1,6 +1,6 @@
 import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
-export class UserCredentialDto {
+export class DefaultCredentialDto {
   @IsString()
   @MinLength(3)
   @MaxLength(10)
@@ -13,7 +13,11 @@ export class UserCredentialDto {
     message: '비밀번호는 영어 소문자와 대문자, 숫자로 구성되어야 합니다.',
   })
   password!: string;
+}
 
+export class SignUpDto extends DefaultCredentialDto {
   @IsString()
   nickname!: string;
 }
+
+export class SignInDto extends DefaultCredentialDto {}
