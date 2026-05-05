@@ -4,10 +4,12 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BoardStatus } from './dto/board.dto';
 import { User } from '@/auth/user.entity';
+import { Comment } from '@/comments/comments.entity';
 
 @Entity()
 export class Board extends BaseEntity {
@@ -28,4 +30,7 @@ export class Board extends BaseEntity {
 
   @ManyToOne(() => User, (user) => user.posts, { eager: false })
   user!: User;
+
+  @OneToMany(() => Comment, (comment) => comment.post, { eager: true })
+  comments?: Comment[];
 }
