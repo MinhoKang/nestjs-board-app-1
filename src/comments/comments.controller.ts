@@ -27,7 +27,8 @@ export class CommentsController {
   async createComment(
     @Param('id', ParseIntPipe) id: number,
     @Body() commentDto: CommentDto,
+    @GetUser() user: User,
   ) {
-    return this.commentsService.createComment(id, commentDto);
+    return this.commentsService.createComment(id, commentDto, user);
   }
 }

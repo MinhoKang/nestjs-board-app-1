@@ -1,3 +1,4 @@
+import { User } from '@/auth/user.entity';
 import { Board } from '@/board/board.entity';
 import {
   BaseEntity,
@@ -21,4 +22,7 @@ export class Comment extends BaseEntity {
 
   @ManyToOne(() => Board, (board) => board.comments, { eager: false })
   post!: Board;
+
+  @ManyToOne(() => User, { eager: false })
+  user!: User;
 }

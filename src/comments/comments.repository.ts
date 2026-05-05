@@ -4,6 +4,17 @@ import { Comment } from './comments.entity';
 import { Repository } from 'typeorm';
 import { CommentDto } from './dto/comment.dto';
 import { Board } from '@/board/board.entity';
+import { User } from '@/auth/user.entity';
+
+export interface CommentResponse {
+  id: number;
+  content: string;
+  createdAt: Date;
+  user: {
+    id: number;
+    username: string;
+  };
+}
 
 @Injectable()
 export class CommentsRepository {
@@ -14,11 +25,33 @@ export class CommentsRepository {
     private readonly boardRepository: Repository<Board>,
   ) {}
 
-  async getComments(id: number): Promise<Comment[]> {
-    return this.commentRepository.find({ where: { post: { id } } });
+  async getComments(id: number): Promise<CommentResponse[]> {
+    const comments = await this.commentRepository.find({
+      where: { post: { id } },
+      relations: {
+        user: true,
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        user: {
+          id: true,
+          username: true,
+        },
+      },
+    });
+
+    return comments.map((comment) =>
+      this.toCommentResponse(comment, comment.user),
+    );
   }
 
-  async createComment(id: number, { content }: CommentDto): Promise<Comment> {
+  async createComment(
+    id: number,
+    { content }: CommentDto,
+    user: User,
+  ): Promise<CommentResponse> {
     const post = await this.boardRepository.findOne({ where: { id } });
 
     if (!post) {
@@ -28,10 +61,23 @@ export class CommentsRepository {
     const comment = this.commentRepository.create({
       post,
       content,
+      user,
     });
 
-    await this.commentRepository.save(comment);
+    const savedComment = await this.commentRepository.save(comment);
 
-    return comment;
+    return this.toCommentResponse(savedComment, user);
+  }
+
+  private toCommentResponse(comment: Comment, user: User): CommentResponse {
+    return {
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      user: {
+        id: user.id,
+        username: user.username,
+      },
+    };
   }
 }

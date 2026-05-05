@@ -16,7 +16,7 @@ export class User extends BaseEntity {
   @Column({ unique: true })
   username!: string;
 
-  @Column()
+  @Column({ select: false })
   password!: string;
 
   @Column()
@@ -25,6 +25,6 @@ export class User extends BaseEntity {
   @CreateDateColumn()
   createdAt!: Date;
 
-  @OneToMany(() => Board, (board) => board.user, { eager: true })
+  @OneToMany(() => Board, (board) => board.user, { eager: false })
   posts?: Board[];
 }
