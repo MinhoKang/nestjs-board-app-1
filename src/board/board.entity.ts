@@ -3,9 +3,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BoardStatus } from './dto/board.dto';
+import { User } from '@/auth/user.entity';
 
 @Entity()
 export class Board extends BaseEntity {
@@ -23,4 +25,7 @@ export class Board extends BaseEntity {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @ManyToOne(() => User, (user) => user.posts, { eager: false })
+  user!: User;
 }

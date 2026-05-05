@@ -1,8 +1,10 @@
+import { Board } from '@/board/board.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -22,4 +24,7 @@ export class User extends BaseEntity {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @OneToMany(() => Board, (board) => board.user, { eager: true })
+  posts?: Board[];
 }
