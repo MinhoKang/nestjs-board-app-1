@@ -40,4 +40,10 @@ export class UserRepository {
 
     return user;
   }
+
+  async deleteUser(id: number): Promise<void> {
+    await this.userRepository.delete({
+      id,
+    });
+  }
 }
