@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import { BoardService } from './board.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -31,7 +32,7 @@ export class BoardController {
   @Patch(':id')
   async updatePost(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updatePostDto: UpdateBoardDto,
+    @Body(ValidationPipe) updatePostDto: UpdateBoardDto,
   ) {
     return await this.boardService.updatePost(id, updatePostDto);
   }
