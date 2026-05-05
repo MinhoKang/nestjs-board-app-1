@@ -35,6 +35,20 @@ export class UserRepository {
     return user;
   }
 
+  async findUserByUsernameWithPassword(username: string): Promise<User> {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.username = :username', { username })
+      .getOne();
+
+    if (!user) {
+      throw new NotFoundException(`유저를 찾지 못했습니다.`);
+    }
+
+    return user;
+  }
+
   async login(username: string): Promise<User> {
     const user = await this.findUserByUsername(username);
 

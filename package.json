@@ -6,15 +6,18 @@
   "scripts": {
     "build": "pnpm --filter server build",
     "format": "pnpm --filter server format",
-    "start": "pnpm --filter server start",
-    "start:dev": "pnpm --filter server start:dev",
-    "start:debug": "pnpm --filter server start:debug",
-    "start:prod": "pnpm --filter server start:prod",
+    "server": "pnpm --filter server start",
+    "server:dev": "pnpm --filter server start:dev",
+    "server:debug": "pnpm --filter server start:debug",
+    "server:prod": "pnpm --filter server start:prod",
     "lint": "pnpm --filter server lint",
     "test": "pnpm --filter server test --passWithNoTests",
     "test:watch": "pnpm --filter server test:watch",
     "test:cov": "pnpm --filter server test:cov",
     "test:debug": "pnpm --filter server test:debug",
-    "test:e2e": "pnpm --filter server test:e2e"
+    "test:e2e": "pnpm --filter server test:e2e",
+    "client:dev": "pnpm --filter client dev",
+    "client:build": "pnpm --filter client build",
+    "client:lint": "pnpm --filter client lint"
   }
 }

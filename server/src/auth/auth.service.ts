@@ -21,7 +21,8 @@ export class AuthService {
   ) {}
 
   private async validatePassword(username: string, plainPassword: string) {
-    const user = await this.userRepository.findUserByUsername(username);
+    const user =
+      await this.userRepository.findUserByUsernameWithPassword(username);
     const isSamePassword = await bcrypt.compare(plainPassword, user.password);
 
     if (!isSamePassword) {
