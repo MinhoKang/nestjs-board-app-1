@@ -69,7 +69,7 @@ export class BoardRepository {
     }
 
     Object.assign(post, updatePostDto);
-    await this.boardRepository.save(post);
+    await this.boardRepository.update(id, post);
 
     return post;
   }
