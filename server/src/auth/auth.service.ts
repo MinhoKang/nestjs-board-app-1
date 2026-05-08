@@ -10,14 +10,16 @@ import {
   SignUpDto,
 } from './dto/user-credential.dto';
 import bcrypt from 'bcryptjs';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { User } from './user.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   private async validatePassword(username: string, plainPassword: string) {
@@ -34,16 +36,47 @@ export class AuthService {
     await this.userRepository.createUser(signUpDto);
   }
 
+  private async getTokens(
+    username: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        { username },
+        {
+          secret,
+          expiresIn: this.configService.getOrThrow<JwtSignOptions['expiresIn']>(
+            'JWT_ACCESS_TOKEN_EXPIRESIN',
+          ),
+        },
+      ),
+      this.jwtService.signAsync(
+        { username },
+        {
+          secret,
+          expiresIn: this.configService.getOrThrow<JwtSignOptions['expiresIn']>(
+            'JWT_REFRESH_TOKEN_EXPIRESIN',
+          ),
+        },
+      ),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
   async login({
     username,
     password,
   }: SignInDto): Promise<{ accessToken: string }> {
     await this.validatePassword(username, password);
 
-    const payload = { username };
-    const accessToken = this.jwtService.sign(payload);
+    const tokens = await this.getTokens(username);
 
-    return { accessToken };
+    return tokens;
   }
 
   async deleteUser(
