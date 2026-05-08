@@ -5,6 +5,7 @@ import databaseConfig from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BoardModule } from './board/board.module';
 import { CommentsModule } from './comments/comments.module';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CommentsModule } from './comments/comments.module';
     AuthModule,
     BoardModule,
     CommentsModule,
+    LoggerModule.forRoot(),
   ],
   controllers: [],
   providers: [ConfigService],

@@ -38,4 +38,12 @@ export class AuthController {
   ) {
     return this.authService.deleteUser(deleteAccountDto, user);
   }
+
+  @Post('/refresh')
+  @UseGuards(AuthGuard())
+  refreshToken(@GetUser() user: User) {
+    console.log('user', user);
+
+    return this.authService.refreshToken(user);
+  }
 }

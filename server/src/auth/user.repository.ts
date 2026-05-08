@@ -1,7 +1,11 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SignUpDto } from './dto/user-credential.dto';
 import bcrypt from 'bcryptjs';
 
@@ -23,6 +27,18 @@ export class UserRepository {
     });
 
     await this.userRepository.save(user);
+  }
+
+  async updateHashedToken(id: number, refreshToken: string) {
+    const salt = await bcrypt.genSalt();
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
+
+    try {
+      await this.userRepository.update(id, { hashedRefreshToken });
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException();
+    }
   }
 
   async findUserByUsername(username: string): Promise<User> {

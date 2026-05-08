@@ -25,6 +25,9 @@ export class User extends BaseEntity {
   @CreateDateColumn()
   createdAt!: Date;
 
+  @Column({ nullable: true })
+  hashedRefreshToken?: string;
+
   @OneToMany(() => Board, (board) => board.user, { eager: false })
   posts?: Board[];
 }
