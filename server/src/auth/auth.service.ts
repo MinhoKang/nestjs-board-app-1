@@ -14,6 +14,8 @@ import bcrypt from 'bcryptjs';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { User } from './user.entity';
 import { ConfigService } from '@nestjs/config';
+import { TAuthMethodsValues, TAuthMethods } from './types/auth-methods.type';
+import { sha256 } from './utils/hash';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +24,19 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
+
+  private transfromPassword(password: string, method: TAuthMethods) {
+    switch (method) {
+      case 'plain':
+        return password;
+
+      case 'hash':
+        return sha256(password);
+
+      case 'hash-newline':
+        return sha256(`${password}\n`);
+    }
+  }
 
   private async validatePassword(username: string, plainPassword: string) {
     const user =
@@ -33,8 +48,19 @@ export class AuthService {
     }
   }
 
-  async createUser(signUpDto: SignUpDto): Promise<void> {
-    await this.userRepository.createUser(signUpDto);
+  async createUser(
+    signUpDto: SignUpDto,
+    method: TAuthMethodsValues,
+  ): Promise<void> {
+    const transformedPassword = this.transfromPassword(
+      signUpDto.password,
+      method,
+    );
+
+    await this.userRepository.createUser({
+      ...signUpDto,
+      password: transformedPassword,
+    });
   }
 
   private async getTokens(

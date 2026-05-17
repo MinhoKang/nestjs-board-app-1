@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Param,
   Post,
   UseGuards,
   ValidationPipe,
@@ -15,14 +16,18 @@ import {
 import { GetUser } from './get-user-decorator';
 import { User } from './user.entity';
 import { AuthGuard } from '@nestjs/passport';
+import type { TAuthMethodsValues } from './types/auth-methods.type';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('signup')
-  signUp(@Body(ValidationPipe) signUpDto: SignUpDto) {
-    return this.authService.createUser(signUpDto);
+  @Post('signup/:method')
+  signUp(
+    @Body(ValidationPipe) signUpDto: SignUpDto,
+    @Param('method') method: TAuthMethodsValues,
+  ) {
+    return this.authService.createUser(signUpDto, method);
   }
 
   @Post('signin')
