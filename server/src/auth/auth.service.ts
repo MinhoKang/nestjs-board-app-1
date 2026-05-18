@@ -160,9 +160,24 @@ export class AuthService {
       );
     }
 
-    await this.validatePassword(user.username, password);
+    const {
+      authFlow,
+      authMethod,
+      id,
+      password: userPassword,
+    } = await this.userRepository.findUserWithPasswordByUsername(user.username);
 
-    return this.userRepository.deleteUser(user.id);
+    const transformedPassword = this.transformPassword(password, authMethod);
+
+    if (authFlow === 'combined') {
+      if (transformedPassword !== userPassword) {
+        throw new BadRequestException('비밀번호가 일치하지 않습니다');
+      }
+    } else {
+      await this.assertPasswordMatches(transformedPassword, userPassword);
+    }
+
+    return this.userRepository.deleteUser(id);
   }
 
   async refreshToken({
