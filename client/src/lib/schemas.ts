@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { boardStatuses } from "@/types"
+import { authFlows, authMethods, boardStatuses } from "@/types"
 
 const passwordRegex = /^[a-zA-Z0-9]*$/
 
@@ -14,6 +14,8 @@ export const signInSchema = z.object({
     .min(8, "비밀번호는 8자 이상이어야 합니다.")
     .max(20, "비밀번호는 20자 이하여야 합니다.")
     .regex(passwordRegex, "비밀번호는 영문과 숫자로만 입력해주세요."),
+  authFlow: z.enum(authFlows),
+  authMethod: z.enum(authMethods),
 })
 
 export const signUpSchema = signInSchema.extend({

@@ -1,7 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LogIn, UserPlus } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import {
+  Controller,
+  useForm,
+  type Control,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form"
 import { Navigate, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
@@ -19,6 +25,8 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSet,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -29,6 +37,85 @@ import {
   signUpSchema,
   type SignUpFormValues,
 } from "@/lib/schemas"
+import { cn } from "@/lib/utils"
+import type { AuthFlow, AuthMethod } from "@/types"
+
+const authFlowOptions = [
+  { value: "combined", label: "동시" },
+  { value: "separated", label: "분리" },
+] satisfies ReadonlyArray<{ value: AuthFlow; label: string }>
+
+const authMethodOptions = [
+  { value: "plain", label: "기본" },
+  { value: "hash", label: "해시" },
+  { value: "hash-newline", label: "해시+개행" },
+] satisfies ReadonlyArray<{ value: AuthMethod; label: string }>
+
+type RadioOptionGroupProps<T extends FieldValues> = {
+  control: Control<T>
+  idPrefix: string
+  legend: string
+  name: FieldPath<T>
+  options: ReadonlyArray<{ value: string; label: string }>
+}
+
+function RadioOptionGroup<T extends FieldValues>({
+  control,
+  idPrefix,
+  legend,
+  name,
+  options,
+}: RadioOptionGroupProps<T>) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FieldSet className="gap-2" data-invalid={fieldState.invalid}>
+          <FieldLegend variant="label">{legend}</FieldLegend>
+          <div
+            data-slot="radio-group"
+            className={cn(
+              "grid gap-2",
+              options.length > 2 ? "grid-cols-3" : "grid-cols-2"
+            )}
+          >
+            {options.map((option) => {
+              const optionId = `${idPrefix}-${name}-${option.value}`
+              const checked = field.value === option.value
+
+              return (
+                <label
+                  key={option.value}
+                  htmlFor={optionId}
+                  className={cn(
+                    "flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm transition-colors",
+                    checked
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-input hover:bg-accent/50"
+                  )}
+                >
+                  <input
+                    id={optionId}
+                    type="radio"
+                    name={field.name}
+                    value={option.value}
+                    checked={checked}
+                    onBlur={field.onBlur}
+                    onChange={() => field.onChange(option.value)}
+                    className="size-4 shrink-0 accent-primary"
+                  />
+                  <span className="min-w-0 truncate">{option.label}</span>
+                </label>
+              )
+            })}
+          </div>
+          <FieldError errors={[fieldState.error]} />
+        </FieldSet>
+      )}
+    />
+  )
+}
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -39,6 +126,8 @@ export function LoginPage() {
     defaultValues: {
       username: "",
       password: "",
+      authFlow: "combined",
+      authMethod: "plain",
     },
   })
   const signUpForm = useForm<SignUpFormValues>({
@@ -47,6 +136,8 @@ export function LoginPage() {
       username: "",
       password: "",
       nickname: "",
+      authFlow: "combined",
+      authMethod: "plain",
     },
   })
 
@@ -148,6 +239,22 @@ export function LoginPage() {
                       </Field>
                     )}
                   />
+
+                  <RadioOptionGroup
+                    control={signInForm.control}
+                    idPrefix="signin"
+                    legend="인증 흐름"
+                    name="authFlow"
+                    options={authFlowOptions}
+                  />
+
+                  <RadioOptionGroup
+                    control={signInForm.control}
+                    idPrefix="signin"
+                    legend="비밀번호 방식"
+                    name="authMethod"
+                    options={authMethodOptions}
+                  />
                 </FieldGroup>
 
                 {signInForm.formState.errors.root?.message && (
@@ -231,6 +338,22 @@ export function LoginPage() {
                         <FieldError errors={[fieldState.error]} />
                       </Field>
                     )}
+                  />
+
+                  <RadioOptionGroup
+                    control={signUpForm.control}
+                    idPrefix="signup"
+                    legend="인증 흐름"
+                    name="authFlow"
+                    options={authFlowOptions}
+                  />
+
+                  <RadioOptionGroup
+                    control={signUpForm.control}
+                    idPrefix="signup"
+                    legend="비밀번호 방식"
+                    name="authMethod"
+                    options={authMethodOptions}
                   />
                 </FieldGroup>
 

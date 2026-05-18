@@ -38,13 +38,19 @@ apiClient.interceptors.request.use((config) => {
 })
 
 export async function signUp(payload: SignUpFormValues) {
-  await apiClient.post<void>("/auth/signup", payload)
+  const { authFlow, authMethod, ...credentials } = payload
+
+  await apiClient.post<void>(
+    `/auth/signup/${authFlow}/${authMethod}`,
+    credentials
+  )
 }
 
 export async function signIn(payload: SignInFormValues) {
+  const { authFlow, authMethod, ...credentials } = payload
   const response = await apiClient.post<AccessTokenResponse>(
-    "/auth/signin",
-    payload
+    `/auth/signin/${authFlow}/${authMethod}`,
+    credentials
   )
 
   return response.data
