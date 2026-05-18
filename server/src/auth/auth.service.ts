@@ -16,6 +16,7 @@ import { User } from './user.entity';
 import { ConfigService } from '@nestjs/config';
 import { TAuthMethodsValues, TAuthMethods } from './types/auth-methods.type';
 import { sha256 } from './utils/hash';
+import { TSignIngFlowValues } from './types/signin-flows.type';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +26,7 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  private transfromPassword(password: string, method: TAuthMethods) {
+  private transformPassword(password: string, method: TAuthMethods) {
     switch (method) {
       case 'plain':
         return password;
@@ -38,28 +39,54 @@ export class AuthService {
     }
   }
 
-  private async validatePassword(username: string, plainPassword: string) {
+  private async validatePassword(username: string, password: string) {
     const user =
-      await this.userRepository.findUserByUsernameWithPassword(username);
-    const isSamePassword = await bcrypt.compare(plainPassword, user.password);
+      await this.userRepository.findUserWithPasswordByUsername(username);
+    const isSamePassword = await bcrypt.compare(password, user.password);
 
     if (!isSamePassword) {
       throw new UnauthorizedException('비밀번호가 일치하지 않습니다.');
     }
+
+    return user;
+  }
+
+  // 비밀번호 bcrypt 비교
+  private async assertPasswordMatches(
+    inputPassword: string,
+    storedPassword: string,
+  ) {
+    const isSamePassword = await bcrypt.compare(inputPassword, storedPassword);
+
+    if (!isSamePassword)
+      throw new UnauthorizedException('비밀번호가 일치하지 않습니다.');
+  }
+
+  private async hashWithBcrypt(password: string): Promise<string> {
+    const salt = await bcrypt.genSalt();
+    return bcrypt.hash(password, salt);
   }
 
   async createUser(
     signUpDto: SignUpDto,
+    flow: TSignIngFlowValues,
     method: TAuthMethodsValues,
   ): Promise<void> {
-    const transformedPassword = this.transfromPassword(
+    const transformedPassword = this.transformPassword(
       signUpDto.password,
       method,
     );
 
-    await this.userRepository.createUser({
+    const passwordToSave =
+      flow === 'combined'
+        ? transformedPassword
+        : await this.hashWithBcrypt(transformedPassword);
+
+    return this.userRepository.createUser({
       ...signUpDto,
-      password: transformedPassword,
+      password: passwordToSave,
+      authFlow: flow,
+      authMethod: method,
     });
   }
 
@@ -95,12 +122,27 @@ export class AuthService {
     };
   }
 
-  async login({
-    username,
-    password,
-  }: SignInDto): Promise<{ accessToken: string; refreshToken: string }> {
-    await this.validatePassword(username, password);
-    const user = await this.userRepository.findUserByUsername(username);
+  async login(
+    { username, password }: SignInDto,
+    flow: TSignIngFlowValues,
+    method: TAuthMethodsValues,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const transformedPassword = this.transformPassword(password, method);
+    let user: User;
+
+    if (flow === 'combined') {
+      user = await this.userRepository.findUserWithUsernameAndPassword(
+        username,
+        transformedPassword,
+      );
+    } else {
+      user = await this.userRepository.findUserWithPasswordByUsername(username);
+      await this.assertPasswordMatches(transformedPassword, user.password);
+    }
+
+    if (user.authFlow !== flow || user.authMethod !== method) {
+      throw new BadRequestException('가입한 인증 방식과 일치하지 않습니다.');
+    }
 
     const tokens = await this.getTokens(username);
     await this.userRepository.updateHashedToken(user.id, tokens.refreshToken);

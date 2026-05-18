@@ -7,6 +7,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import type { TSignIngFlowValues } from './types/signin-flows.type';
+import type { TAuthMethodsValues } from './types/auth-methods.type';
 
 @Entity()
 export class User extends BaseEntity {
@@ -30,4 +32,10 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Board, (board) => board.user, { eager: false })
   posts?: Board[];
+
+  @Column()
+  authFlow!: TSignIngFlowValues;
+
+  @Column()
+  authMethod!: TAuthMethodsValues;
 }

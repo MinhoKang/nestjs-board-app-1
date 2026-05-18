@@ -17,22 +17,28 @@ import { GetUser } from './get-user-decorator';
 import { User } from './user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import type { TAuthMethodsValues } from './types/auth-methods.type';
+import type { TSignIngFlowValues } from './types/signin-flows.type';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('signup/:method')
+  @Post('signup/:flow/:method')
   signUp(
     @Body(ValidationPipe) signUpDto: SignUpDto,
+    @Param('flow') flow: TSignIngFlowValues,
     @Param('method') method: TAuthMethodsValues,
   ) {
-    return this.authService.createUser(signUpDto, method);
+    return this.authService.createUser(signUpDto, flow, method);
   }
 
-  @Post('signin')
-  signIn(@Body(ValidationPipe) signInDto: SignInDto) {
-    return this.authService.login(signInDto);
+  @Post('signin/:flow/:method')
+  signIn(
+    @Body(ValidationPipe) signInDto: SignInDto,
+    @Param('flow') flow: TSignIngFlowValues,
+    @Param('method') method: TAuthMethodsValues,
+  ) {
+    return this.authService.login(signInDto, flow, method);
   }
 
   @Delete('/delete')

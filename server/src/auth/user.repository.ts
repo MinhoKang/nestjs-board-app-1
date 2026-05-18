@@ -8,6 +8,13 @@ import {
 } from '@nestjs/common';
 import { SignUpDto } from './dto/user-credential.dto';
 import bcrypt from 'bcryptjs';
+import type { TSignIngFlowValues } from './types/signin-flows.type';
+import type { TAuthMethodsValues } from './types/auth-methods.type';
+
+type TCreateUserInput = SignUpDto & {
+  authFlow: TSignIngFlowValues;
+  authMethod: TAuthMethodsValues;
+};
 
 @Injectable()
 export class UserRepository {
@@ -16,15 +23,8 @@ export class UserRepository {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async createUser({ username, password, nickname }: SignUpDto): Promise<void> {
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const user = this.userRepository.create({
-      username,
-      nickname,
-      password: hashedPassword,
-    });
+  async createUser(createUserInput: TCreateUserInput): Promise<void> {
+    const user = this.userRepository.create(createUserInput);
 
     await this.userRepository.save(user);
   }
@@ -51,12 +51,27 @@ export class UserRepository {
     return user;
   }
 
-  async findUserByUsernameWithPassword(username: string): Promise<User> {
+  async findUserWithPasswordByUsername(username: string): Promise<User> {
     const user = await this.userRepository
       .createQueryBuilder('user')
       .addSelect('user.password')
       .where('user.username = :username', { username })
       .getOne();
+
+    if (!user) {
+      throw new NotFoundException(`유저를 찾지 못했습니다.`);
+    }
+
+    return user;
+  }
+
+  async findUserWithUsernameAndPassword(
+    username: string,
+    password: string,
+  ): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { username, password },
+    });
 
     if (!user) {
       throw new NotFoundException(`유저를 찾지 못했습니다.`);
