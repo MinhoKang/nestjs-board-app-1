@@ -4,16 +4,18 @@ import { authFlows, authMethods, boardStatuses } from "@/types"
 
 const passwordRegex = /^[a-zA-Z0-9]*$/
 
+const passwordSchema = z
+  .string()
+  .min(8, "비밀번호는 8자 이상이어야 합니다.")
+  .max(20, "비밀번호는 20자 이하여야 합니다.")
+  .regex(passwordRegex, "비밀번호는 영문과 숫자로만 입력해주세요.")
+
 export const signInSchema = z.object({
   username: z
     .string()
     .min(3, "아이디는 3자 이상이어야 합니다.")
     .max(10, "아이디는 10자 이하여야 합니다."),
-  password: z
-    .string()
-    .min(8, "비밀번호는 8자 이상이어야 합니다.")
-    .max(20, "비밀번호는 20자 이하여야 합니다.")
-    .regex(passwordRegex, "비밀번호는 영문과 숫자로만 입력해주세요."),
+  password: passwordSchema,
   authFlow: z.enum(authFlows),
   authMethod: z.enum(authMethods),
 })
@@ -32,7 +34,18 @@ export const commentSchema = z.object({
   content: z.string().trim().min(1, "댓글을 입력해주세요."),
 })
 
+export const deleteAccountSchema = z
+  .object({
+    password: passwordSchema,
+    passwordConfirm: z.string().min(1, "비밀번호 확인을 입력해주세요."),
+  })
+  .refine(({ password, passwordConfirm }) => password === passwordConfirm, {
+    message: "비밀번호가 일치하지 않습니다.",
+    path: ["passwordConfirm"],
+  })
+
 export type SignInFormValues = z.infer<typeof signInSchema>
 export type SignUpFormValues = z.infer<typeof signUpSchema>
+export type DeleteAccountFormValues = z.infer<typeof deleteAccountSchema>
 export type BoardFormValues = z.infer<typeof boardSchema>
 export type CommentFormValues = z.infer<typeof commentSchema>

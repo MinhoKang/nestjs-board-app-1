@@ -4,6 +4,7 @@ import type { AccessTokenResponse, Board, Comment } from "@/types"
 import type {
   BoardFormValues,
   CommentFormValues,
+  DeleteAccountFormValues,
   SignInFormValues,
   SignUpFormValues,
 } from "@/lib/schemas"
@@ -54,6 +55,12 @@ export async function signIn(payload: SignInFormValues) {
   )
 
   return response.data
+}
+
+export async function deleteAccount(payload: DeleteAccountFormValues) {
+  await apiClient.delete<void>("/auth/delete", {
+    data: payload,
+  })
 }
 
 export async function getBoards() {
