@@ -1,0 +1,89 @@
+services:
+  server:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter server start:dev"
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: 3000
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - pnpm-store:/root/.local/share/pnpm/store
+      - root-node-modules:/app/node_modules
+      - server-node-modules:/app/server/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "0106"
+      POSTGRES_DB: board-app
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d board-app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    configs:
+      - source: pgadmin-pgpass
+        target: /config/pgpass
+        uid: "5050"
+        gid: "5050"
+        mode: 0400
+      - source: pgadmin-servers
+        target: /pgadmin4/servers.json
+        mode: 0444
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pnpm-store:
+  root-node-modules:
+  server-node-modules:
+  postgres-data:
+  pgadmin-data:
+
+configs:
+  pgadmin-pgpass:
+    content: |
+      db:5432:*:postgres:0106
+  pgadmin-servers:
+    content: |
+      {
+        "Servers": {
+          "1": {
+            "Name": "Board App Postgres",
+            "Group": "Servers",
+            "Host": "db",
+            "Port": 5432,
+            "MaintenanceDB": "board-app",
+            "Username": "postgres",
+            "SSLMode": "prefer",
+            "PassFile": "/config/pgpass"
+          }
+        }
+      }
