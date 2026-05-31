@@ -20,6 +20,22 @@ services:
       db:
         condition: service_healthy
 
+  client:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm --filter client dev --host 0.0.0.0"
+    environment:
+      VITE_DEV_PROXY_TARGET: http://server:3000
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - pnpm-store:/root/.local/share/pnpm/store
+      - root-node-modules:/app/node_modules
+      - client-node-modules:/app/client/node_modules
+    depends_on:
+      - server
+
   db:
     image: postgres:16-alpine
     environment:
@@ -64,6 +80,7 @@ volumes:
   pnpm-store:
   root-node-modules:
   server-node-modules:
+  client-node-modules:
   postgres-data:
   pgadmin-data:
 
